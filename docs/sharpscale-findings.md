@@ -1,49 +1,88 @@
 # Sharpscale compatibility analysis
 
-## Key finding
+## Executive correction
 
-Sharpscale already implements the relevant final-output filtering path. It hooks `SceDisplay`'s import of `ksceIftuSetInputFrameBuffer` and has a `bilinear` configuration option. Its configuration app exposes two values: `Point` and `Bilinear`.
+Sharpscale is highly relevant because it hooks the same IFTU call that a custom plugin would need to intercept. However, its Bilinear option is **not a force-bilinear switch**. It preserves the filter value supplied by the caller. Therefore, it cannot guarantee bilinear filtering for a PSPemu bubble if PSPemu submits the call with nearest filtering.
 
-Sources:
-- [Sharpscale source: `sharpscale.c`](https://github.com/psv-plugins-archive/sharpscale/blob/master/sharpscale.c)
-- [Sharpscale config app: `config-app/main.c`](https://github.com/psv-plugins-archive/sharpscale/blob/master/config-app/main.c)
-- [Sharpscale README](https://github.com/psv-plugins-archive/sharpscale/blob/master/README.md)
-- [Sharpscale changelog](https://github.com/psv-plugins-archive/sharpscale/blob/master/CHANGELOG.md)
+This distinction was verified directly in the upstream source branch `Electry/Sharpscale`, file `main.c`, function `sceIftuSetInputFrameBuffer_hook`:
 
-## Code-path observations
+```c
+bilinear = (!ss_config.bilinear && bilinear == 1) ? 0 : bilinear;
+```
 
-- The kernel module tracks the active primary display head and framebuffer metadata through SceDisplay hooks.
-- It hooks `SceDisplay` import library NID `0xCAFCFE50`, function NID `0x7CE0C4DA` (`ksceIftuSetInputFrameBuffer`).
-- In its filter logic, when the config is Point (`bilinear == false`), it changes an incoming IFTU bilinear request (`bilinear == 1`) to nearest (`0`).
-- When config is Bilinear (`bilinear == true`), it leaves an incoming bilinear request unchanged.
-- The plugin's PSP emulator detection is used for its PS1 aspect-ratio behavior. The filter toggle itself is applied in the general display-plane scaling path, not behind a Chovy-Sign or Adrenaline-only check.
-- The README explicitly describes Bilinear as bilinear interpolation and Point as nearest-neighbour; when scaling is not applied, the system default bilinear interpolation is used.
+Meaning:
+- Point mode: changes an incoming value of 1 to 0.
+- Bilinear mode: leaves the incoming value unchanged (including 0).
+- It does not turn an incoming 0 into 1.
+
+The source also confirms that Sharpscale calls `ksceSblACMgrIsPspEmu(SCE_KERNEL_PROCESS_ID_SELF)` from inside this IFTU hook for its PSPemu-specific PS1 aspect-ratio logic. This is strong evidence that the process check is meaningful at this call site, although it is not a substitute for testing on the target firmware and bubble.
+
+## Relevant source behavior
+
+- Kernel module hooks the `SceDisplay` import for IFTU using library NID `0xCAFCFE50` and function NID `0x7CE0C4DA`.
+- It also hooks internal SceDisplay framebuffer-preparation functions and reads SceDisplay internal structures/offsets.
+- It tracks primary-head and framebuffer metadata to calculate scaling and placement.
+- Its PSPemu process check is used only in the aspect-ratio branch; the filter-setting expression itself is applied in the generic scaling path.
+- If scaling is not applied, the hook passes through the original filter value.
+- The configuration reset sets `bilinear = false`, i.e. Point mode.
 
 ## Relevance to Chovy-Sign PSP bubbles
 
-This is the strongest existing candidate for the user's desired effect without starting Adrenaline. Chovy-Sign creates PSP content that runs through the Vita's PSP emulator; Sharpscale operates below the app at the SceDisplay/IFTU output stage. Its generic IFTU hook is therefore likely to see the PSPemu compatibility framebuffer too.
+Chovy-Sign prepares/signs PSP content for execution by the Vita PSP emulator; it does not provide its own renderer or graphics-filter setting. A kernel-level IFTU hook is therefore a plausible point below the bubble launcher.
 
-However, this remains a source-level compatibility assessment, not a test on the user's console. The exact Chovy-Sign bubble path, firmware-specific SceDisplay behavior, and visual result must be confirmed on the Vita.
+The source evidence establishes:
+1. Sharpscale hooks the same IFTU import that is the candidate integration point.
+2. Sharpscale's hook can identify PSPemu using `ksceSblACMgrIsPspEmu(SCE_KERNEL_PROCESS_ID_SELF)`.
+3. A custom hook could, in principle, set the IFTU filter to bilinear only when the current process is PSPemu.
 
-## Important limitations
+Still unverified on hardware:
+- Whether every target Chovy-Sign PSP bubble reaches this exact import path on FW 3.60.
+- The incoming filter value PSPemu actually supplies for the relevant plane.
+- Whether forcing bilinear produces the preferred image on the Vita 1000 panel.
+- Whether the same PSPemu process also uses a 480x272 framebuffer for other content (for example PSP shell/UI or PS1 POPS paths).
 
-- This is **output scaling interpolation**, not texture filtering inside the PSP emulator. It softens the final scaled image; it cannot add detail or raise the internal PSP rendering resolution.
-- Sharpscale's `bilinear` setting is global to the display path, not documented as a per-PSP-bubble option. Other scaled applications may also be affected.
-- The kernel plugin uses SceDisplay hooks and internal offsets. Treat it as a kernel-level modification and verify the exact release and firmware compatibility before installation.
-- The source contains file-logging initialization calls, but `CMakeLists.txt` defaults `FILE_LOGGING` to `0`, which disables file logging in a default source build. The config app inherits that setting. The exact prebuilt package should still be checked before claiming that it writes no files.
-- Sharpscale's default/reset config sets `bilinear = false` (Point). To test the smoother mode, the configuration app must show `Bilinear` as selected.
+## Important distinction: output interpolation vs texture filtering
 
-## Version and maintenance note
+IFTU bilinear filtering affects the final display-plane sampling/scaling. It does not:
+- increase the PSP game's internal render resolution;
+- add texture detail;
+- change the game's own texture filtering;
+- repair low-resolution assets.
 
-The mirrored source repository has no GitHub Releases entries and its latest listed source commit is from August 2020. The published Sharpscale 1.50 package page lists version 1.50 and a release date of August 24, 2020. This is mature but old software, not a recently maintained plugin. Firmware 3.60 compatibility should be verified against the exact binary/build rather than assumed from the generic description.
+It can soften jagged edges, but it can also soften text, HUD elements, and pixel-art. The desired outcome must be judged visually.
+
+## Global impact and safety
+
+Sharpscale is a system-wide display plugin, not a per-bubble setting. Its internal hooks and offsets make it a kernel-level change. Its source supports optional file logging; the source build's logging is controlled by compile definitions, so the exact prebuilt binary must be audited before claiming it writes no files.
+
+Do not install Sharpscale solely on the assumption that Bilinear forces the PSPemu filter on. If it is already installed, do not change its configuration until its current settings and effects are recorded.
+
+## Candidate custom implementation
+
+A much smaller plugin may be possible than Sharpscale:
+- One kernel import hook on `SceDisplay` / `ksceIftuSetInputFrameBuffer`.
+- Call `ksceSblACMgrIsPspEmu(SCE_KERNEL_PROCESS_ID_SELF)`.
+- Require a non-NULL plane state and the expected PSP framebuffer dimensions (initial candidate: 480x272).
+- Change only the `bilinear` argument to `SCE_IFTU_FILTER_MODE_BILINEAR`.
+- Preserve plane, state, and sync arguments.
+- Pass every non-PSPemu or non-matching call through unchanged.
+- No config file, file logging, framebuffer rewriting, scaling geometry changes, or ISO/save/license modifications.
+
+This is a design proposal, not a compiled or tested plugin. The 480x272 condition is a conservative candidate discriminator, not yet proven unique to PSP game output. Before release, inspect plane identity and test whether PSP1/POPS or shell surfaces could match it. The hook must also preserve negative filter values for non-target calls because VitaSDK documents negative values as “preserve cached filter.”
+
+## Version / maintenance note
+
+Sharpscale's public source is old (2020) and its binary package must be checked independently for exact firmware compatibility. The source is valuable as a technical reference, not an automatic recommendation for this user's 3.60 setup.
 
 ## Recommended test sequence
 
-1. First check whether Sharpscale is already installed; do not install a duplicate kernel plugin.
-2. If present, record the current settings and confirm the loaded plugin path/version.
-3. Change only `Scaling algorithm` from Point to Bilinear in the Sharpscale configuration app.
-4. Test one non-critical Chovy-Sign PSP bubble and compare fine text/edges with the previous setting.
-5. Check one native Vita app/game afterward for unwanted softness or visual regression.
-6. If the result is worse, restore Point. No ISO, license, save, or bubble files should need modification.
+1. Confirm whether Sharpscale is installed; do not install a duplicate.
+2. If installed, record version, configured path, and current mode before changing anything.
+3. Use a disposable PSP bubble and capture a baseline image.
+4. Compare baseline against a controlled bilinear-only test, keeping all other plugins and clocks unchanged.
+5. Check fine text, HUD, gradients, and motion, not just a title screen.
+6. Verify native Vita applications remain unchanged with the proposed PSPemu-only filter.
+7. Test suspend/resume, returning to LiveArea, and repeated launches.
+8. If any regression occurs, remove/disable the test plugin by editing the taiHEN config from VitaShell or recovery access; never modify game data to undo it.
 
-Do not combine this test with other plugin changes or overclock changes. Do not use the AdrBubbleBooter direct-IFTU patch as a substitute for Sharpscale; it is a separate Adrenaline Bubble Booter modification.
+No ISO, license, bubble, or save file should need modification.
