@@ -15,7 +15,7 @@ Evaluar si es posible aplicar filtrado bilineal (o un filtro de suavizado equiva
 
 ## Estado
 
-**Investigación inicial. No existe todavía un plugin, parche ni VPK funcional.**
+**Investigación técnica avanzada. No existe todavía un plugin, parche ni VPK propio funcional.** La ruta más prometedora identificada es el ajuste Bilinear de Sharpscale; falta validarlo en una burbuja Chovy-Sign real.
 
 ### Hallazgo confirmado en Adrenaline
 
@@ -48,13 +48,14 @@ Fuente: [LiEnby/chovy-sign](https://github.com/LiEnby/chovy-sign).
 
 ## Plan de investigación
 
-- [ ] Identificar exactamente cómo Chovy-Sign configura y lanza las burbujas PSP.
-- [ ] Determinar si la burbuja usa el renderer normal de PSPemu o componentes/ruta de Adrenaline.
-- [ ] Localizar interfaces documentadas o puntos de integración seguros para acceder a la imagen final.
-- [ ] Estudiar los shaders bilineales de Adrenaline y sus dependencias/licencia.
-- [ ] Evaluar coste de GPU, latencia, compatibilidad y conflictos con plugins habituales.
-- [ ] Diseñar una prueba reversible sin tocar ISO, licencia ni datos de guardado.
-- [ ] Compilar y probar únicamente cuando exista una ruta técnica demostrable.
+- [x] Identificar el papel de Chovy-Sign: prepara/firma el contenido; no implementa el renderer PSP.
+- [ ] Confirmar en consola que la burbuja Chovy-Sign usa la ruta SceDisplay/IFTU observada en Sharpscale.
+- [x] Localizar un punto de integración documentado: `ksceIftuSetInputFrameBuffer`.
+- [x] Auditar las rutas de filtrado de Adrenaline y Sharpscale, sin copiar código externo.
+- [ ] Verificar la compatibilidad exacta de Sharpscale con el firmware 3.60 y el conjunto de plugins instalado.
+- [x] Diseñar una prueba reversible que no toca ISO, licencia ni datos de guardado.
+- [ ] Medir el resultado visual, rendimiento y estabilidad en la PS Vita real.
+- [ ] Crear un plugin propio únicamente si Sharpscale no cubre el caso o sus logs/ajuste global no son aceptables.
 
 ## Criterios para aceptar una solución
 
