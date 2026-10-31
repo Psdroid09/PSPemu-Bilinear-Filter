@@ -34,6 +34,12 @@ Fuente: [TheOfficialFloW/Adrenaline](https://github.com/TheOfficialFloW/Adrenali
 
 No se copiará ni instalará el plugin de Adrenaline como si fuera compatible con PSPemu. Primero hay que demostrar un punto de integración válido en el proceso/emulador que ejecuta las burbujas independientes.
 
+### Hallazgo confirmado en Chovy-Sign
+
+El README de Chovy-Sign describe la herramienta como un conversor/firmador de imágenes PSP y PS1 para que puedan ejecutarse en PS Vita usando contenido oficial/licencias. No documenta un ajuste de filtrado gráfico ni un renderer propio. Por tanto, Chovy-Sign parece encargarse de preparar el contenido de la burbuja, no de ofrecer un punto directo para cambiar cómo PSPemu escala la imagen.
+
+Fuente: [LiEnby/chovy-sign](https://github.com/LiEnby/chovy-sign).
+
 ## Plan de investigación
 
 - [ ] Identificar exactamente cómo Chovy-Sign configura y lanza las burbujas PSP.
