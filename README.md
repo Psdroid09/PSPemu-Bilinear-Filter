@@ -31,6 +31,12 @@ Esto confirma que el suavizado de Adrenaline forma parte de su ruta de composici
 Fuente: [TheOfficialFloW/Adrenaline](https://github.com/TheOfficialFloW/Adrenaline), especialmente `user/menu.c` y `user/includes/`.
 
 
+### Estrategia de prueba aislada
+
+Se confirmó que el cargador de Adrenaline solo inserta su renderer en el título `PSPEMUCFW`; no se activa automáticamente en burbujas Chovy-Sign. La vía menos invasiva para una prueba futura sería cargar un módulo de usuario solo bajo el TITLEID de una burbuja de prueba, nunca con `*ALL` ni con un plugin kernel global.
+
+Detalles: [`docs/chovy-titleid-loading-strategy.md`](docs/chovy-titleid-loading-strategy.md).
+
 ### Fuente del shader Advanced AA localizada
 
 Se encontró el código fuente coincidente `advanced_aa_v.cg` / `advanced_aa_f.cg` en la colección de shaders de frangarcj. Es un filtro espacial adaptativo de nueve muestras, no FXAA. El algoritmo ya está identificado, pero aún falta una ruta segura para capturar y presentar el framebuffer PSP de una burbuja Chovy-Sign.
