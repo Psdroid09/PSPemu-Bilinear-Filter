@@ -4,7 +4,7 @@ Investigación y desarrollo de una posible mejora de suavizado para juegos PSP e
 
 ## Objetivo
 
-Evaluar si es posible aplicar filtrado bilineal (o un filtro de suavizado equivalente) a la imagen de los juegos PSP ejecutados por el emulador oficial **PSPemu**, sin requerir que el usuario abra Adrenaline y sin modificar ISOs, licencias ni partidas guardadas.
+Investigar una técnica de **antialiasing** que reduzca los dientes de sierra en los bordes de los juegos PSP ejecutados como burbujas Chovy-Sign en el emulador oficial **PSPemu**, sin requerir Adrenaline y sin modificar ISOs, licencias ni partidas guardadas. El objetivo no es desenfocar toda la imagen.
 
 ## Entorno objetivo
 
@@ -15,7 +15,7 @@ Evaluar si es posible aplicar filtrado bilineal (o un filtro de suavizado equiva
 
 ## Estado
 
-**Investigación técnica avanzada. No existe todavía un plugin, parche ni VPK propio funcional.** Se encontró primero una vía más segura: Sony documenta un ajuste Bilinear integrado en el menú rápido de juegos PSP. Hay que probar si aparece también en una burbuja Chovy-Sign. Si no aparece, la alternativa técnica es un hook IFTU propio y limitado a PSPemu.
+**Investigación técnica. No existe todavía un plugin, parche ni VPK propio funcional.** El usuario confirmó que el ajuste Bilinear de Sony aparece en sus burbujas Chovy-Sign, pero probó el resultado y lo consideró horrible. Por tanto, no se debe forzar bilinear: el objetivo cambió a reducir dientes de sierra (antialiasing), no a suavizar globalmente la imagen.
 
 ### Hallazgo confirmado en Adrenaline
 
@@ -30,19 +30,19 @@ Esto confirma que el suavizado de Adrenaline forma parte de su ruta de composici
 
 Fuente: [TheOfficialFloW/Adrenaline](https://github.com/TheOfficialFloW/Adrenaline), especialmente `user/menu.c` y `user/includes/`.
 
-### Primera opción recomendada: menú rápido oficial de PSPemu
+### Prueba del filtro nativo: resultado rechazado
 
-Sony documenta que, mientras corre un juego PSP, se mantiene pulsado PS, se entra a Settings y se puede activar **Bilinear Filtering**. Es la primera prueba que debe hacerse en una burbuja Chovy-Sign: no requiere plugin, cambios en taiHEN ni tocar ISO/licencias/partidas. La guía oficial no menciona expresamente burbujas Chovy-Sign, así que falta confirmar que el ajuste aparezca en ellas.
+El usuario confirmó que **Bilinear Filtering** sí aparece en el menú rápido de sus burbujas Chovy-Sign, pero el resultado visual le pareció horrible. Mantenerlo desactivado. El bilinear de salida mezcla muestras de toda la imagen y no equivale a antialiasing geométrico.
 
 Detalles: [`docs/native-quick-menu.md`](docs/native-quick-menu.md).
 
-### Hallazgo técnico: API IFTU de firmware 3.60 verificada
+### Límite del IFTU
 
-La documentación de VitaSDK confirma los modos IFTU `NEAREST = 0` y `BILINEAR = 1`, la firma exacta de `ksceIftuSetInputFrameBuffer`, y los identificadores de importación de FW 3.60 para detectar PSPemu. Esto demuestra que existe una vía técnica para solicitar bilinear sin copiar el framebuffer ni modificar la geometría. **No demuestra todavía que la llamada de una burbuja Chovy-Sign en el dispositivo del usuario coincida con la firma provisional.**
+La documentación de VitaSDK confirma los modos IFTU `NEAREST = 0` y `BILINEAR = 1`. Sin embargo, cambiar ese argumento solo cambia el muestreo de salida; no activa MSAA ni FXAA. Como el usuario rechazó el resultado bilinear, un hook que simplemente fuerce ese modo no es una solución válida.
 
 Detalles: [`docs/vitasdk-api-verification.md`](docs/vitasdk-api-verification.md) y [`docs/plugin-design.md`](docs/plugin-design.md).
 
-### Hallazgo principal: Sharpscale ya tiene una ruta IFTU relevante
+### Hallazgo de arquitectura: MSAA de GXM no es un interruptor para PSPemu
 
 La auditoría del código de Sharpscale encontró que ya intercepta `ksceIftuSetInputFrameBuffer` y usa `ksceSblACMgrIsPspEmu(SCE_KERNEL_PROCESS_ID_SELF)` desde ese hook. Sin embargo, su opción Bilinear solo conserva el valor entrante; no fuerza un 0 a 1. Por tanto, Sharpscale no garantiza el efecto buscado si PSPemu envía nearest. Un plugin propio podría forzar bilinear solo para llamadas PSPemu validadas, pero aún no está implementado.
 
