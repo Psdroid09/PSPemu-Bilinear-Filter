@@ -15,7 +15,7 @@ The VitaSDK SceGxm documentation exposes:
 
 The multisample mode is supplied as part of `SceGxmRenderTargetParams.multisampleMode`. Fragment-program creation also takes a `SceGxmMultisampleMode` argument. See the official VitaSDK API documentation: https://docs.vitasdk.org/group__SceGxmUser.html and the enum listing https://docs.vitasdk.org/globals_eval_s.html.
 
-This proves the Vita's GXM API exposes MSAA configuration for applications using GXM. It does **not** prove that Sony's closed PSPemu renderer uses GXM in an interceptable way, that it creates a multisampled render target, or that a plugin can safely retrofit MSAA after the render target and fragment programs have already been created.
+This proves the Vita's GXM API exposes MSAA configuration for native Vita applications using GXM. However, PSPemu is not simply a native Vita application renderer: the Vita contains PSP hardware for PSP backward compatibility, and PSPemu runs PSP software against that PSP-side CPU/GPU hardware. See the Vita PSP hardware compatibility overview (https://consolemods.org/wiki/Vita:PlayStation_Portable_(PSP)_Games) and the PSPemu/ePSP glossary (https://adrenaline.sarcasticat.com/docs/XX-Glossary.html). Therefore, GXM MSAA settings do not automatically apply to the PSP Graphics Engine. There is no evidence that changing GXM render-target settings would anti-alias the PSP game's geometry.
 
 ## Techniques
 
@@ -23,7 +23,7 @@ This proves the Vita's GXM API exposes MSAA configuration for applications using
 
 MSAA samples polygon coverage during rasterization and resolves the result. It targets geometric edges more directly than a display scaling filter. On Vita, the public GXM API documents 2x and 4x modes.
 
-Main blocker: MSAA must be selected consistently when creating the render target and matching fragment programs. A simple late kernel hook on the IFTU display plane cannot enable it. Retrofitting MSAA into an already-created PSPemu rendering pipeline is likely to require intercepting or modifying renderer setup, not merely changing the final framebuffer filter.
+Critical architecture blocker: PSPemu uses the PSP hardware graphics path for PSP rendering, so Vita GXM's MSAA controls are not a viable direct switch for PSP game geometry. Do not pursue GXM MSAA hooks unless evidence emerges that a particular PSPemu output stage is actually rendered through GXM.
 
 ### FXAA — possible post-process, but unproven in PSPemu
 
