@@ -71,3 +71,53 @@ The IFTU import hook runs in the kernel display path. Before implementation, ver
 - Include a clear disable/uninstall procedure and test on a disposable bubble before normal use.
 
 This is a viable implementation direction, not a tested plugin. It still requires compilation against the correct VitaSDK/taiHEN headers, ABI review, firmware 3.60 testing, and confirmation on a real Chovy-Sign bubble.
+
+
+## Updated source-level finding: process identity at the IFTU hook
+
+The upstream [Electry/Sharpscale `main.c`](https://github.com/Electry/Sharpscale/blob/source/main.c) was fetched and inspected. Its `sceIftuSetInputFrameBuffer_hook` calls:
+
+```c
+ksceSblACMgrIsPspEmu(SCE_KERNEL_PROCESS_ID_SELF)
+```
+
+inside the IFTU hook itself, to gate PSPemu-specific aspect-ratio handling. This is stronger evidence than merely finding the API in VitaSDK documentation: a real kernel plugin uses the current-process test at this exact hook site.
+
+It does not prove every call is made in the PSPemu context, nor does it prove the Chovy-Sign bubble's exact call sequence. It does, however, make the PSPemu process gate a well-founded implementation candidate rather than a speculative API choice.
+
+## Updated source-level finding: Sharpscale does not force Bilinear
+
+The upstream Sharpscale hook contains:
+
+```c
+bilinear = (!ss_config.bilinear && bilinear == 1) ? 0 : bilinear;
+```
+
+Therefore:
+- Point setting converts incoming bilinear (1) to nearest (0).
+- Bilinear setting preserves the caller's incoming value.
+- If PSPemu sends nearest (0), Sharpscale's Bilinear setting leaves it at 0.
+
+A custom PSPemu-only hook would need to explicitly set the argument to 1 for the target PSP framebuffer. Sharpscale is useful proof of the hook and process gate, but its Bilinear option alone does not prove the desired result.
+
+## IFTU API details relevant to a safe hook
+
+The current VitaSDK header documents that:
+- `ksceIftuSetInputFrameBuffer` takes plane index, a read-only plane-state pointer, filter argument, and sync flag.
+- `SCE_IFTU_FILTER_MODE_NEAREST` is 0 and `SCE_IFTU_FILTER_MODE_BILINEAR` is 1.
+- A nonnegative filter argument replaces the cached filter setting.
+- A negative filter argument preserves the cached filter setting.
+- A NULL plane-state pointer reuses cached state.
+
+This means the hook must not alter negative values for unrelated calls. For the target PSPemu call, setting the filter to 1 is a direct documented way to request bilinear, but the target identification must be sufficiently narrow.
+
+Primary source: [VitaSDK `iftu.h`](https://github.com/vitasdk/vita-headers/blob/master/include/psp2kern/lowio/iftu.h).
+
+## Narrowing the target
+
+The current conservative candidate is:
+- PSPemu process check succeeds;
+- plane state is non-NULL;
+- framebuffer dimensions are exactly 480x272.
+
+This is not yet a proven unique signature. It may include PSPemu UI or another compatibility mode if those use the same dimensions. Before a release build, inspect the plane identity and verify actual calls on a disposable PSP bubble. Do not rely on dimensions alone if a stronger verified discriminator is available.
