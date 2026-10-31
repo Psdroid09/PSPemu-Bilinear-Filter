@@ -30,6 +30,12 @@ Esto confirma que el suavizado de Adrenaline forma parte de su ruta de composici
 
 Fuente: [TheOfficialFloW/Adrenaline](https://github.com/TheOfficialFloW/Adrenaline), especialmente `user/menu.c` y `user/includes/`.
 
+### Hallazgo principal: Sharpscale ya tiene una ruta IFTU relevante
+
+La auditoría del código de Sharpscale encontró que ya intercepta `ksceIftuSetInputFrameBuffer` y ofrece `Point` o `Bilinear`. El filtro se aplica en la ruta genérica de escalado de pantalla, no solamente dentro de Adrenaline. Por ello es el candidato más prometedor para suavizar la salida de PSPemu sin iniciar Adrenaline ni modificar burbujas.
+
+No se ha probado todavía en una burbuja Chovy-Sign real. Su ajuste es global y el plugin kernel escribe logs; ambos puntos deben evaluarse antes de recomendar instalación. Detalles y secuencia de prueba: [`docs/sharpscale-findings.md`](docs/sharpscale-findings.md).
+
 ### Restricción importante
 
 No se copiará ni instalará el plugin de Adrenaline como si fuera compatible con PSPemu. Primero hay que demostrar un punto de integración válido en el proceso/emulador que ejecuta las burbujas independientes.
