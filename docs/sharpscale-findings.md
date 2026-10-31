@@ -30,8 +30,12 @@ However, this remains a source-level compatibility assessment, not a test on the
 - This is **output scaling interpolation**, not texture filtering inside the PSP emulator. It softens the final scaled image; it cannot add detail or raise the internal PSP rendering resolution.
 - Sharpscale's `bilinear` setting is global to the display path, not documented as a per-PSP-bubble option. Other scaled applications may also be affected.
 - The kernel plugin uses SceDisplay hooks and internal offsets. Treat it as a kernel-level modification and verify the exact release and firmware compatibility before installation.
-- The source initializes file logging to `ur0:/sharpscale.log`; the configuration app also initializes `ux0:/sharpscale-config.log`. The user prefers minimal persistent logging, so a no-log build would need a separately audited source modification if this becomes the chosen route.
+- The source contains file-logging initialization calls, but `CMakeLists.txt` defaults `FILE_LOGGING` to `0`, which disables file logging in a default source build. The config app inherits that setting. The exact prebuilt package should still be checked before claiming that it writes no files.
 - Sharpscale's default/reset config sets `bilinear = false` (Point). To test the smoother mode, the configuration app must show `Bilinear` as selected.
+
+## Version and maintenance note
+
+The mirrored source repository has no GitHub Releases entries and its latest listed source commit is from August 2020. The published Sharpscale 1.50 package page lists version 1.50 and a release date of August 24, 2020. This is mature but old software, not a recently maintained plugin. Firmware 3.60 compatibility should be verified against the exact binary/build rather than assumed from the generic description.
 
 ## Recommended test sequence
 
