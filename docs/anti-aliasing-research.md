@@ -17,6 +17,12 @@ The multisample mode is supplied as part of `SceGxmRenderTargetParams.multisampl
 
 This proves the Vita's GXM API exposes MSAA configuration for native Vita applications using GXM. However, PSPemu is not simply a native Vita application renderer: the Vita contains PSP hardware for PSP backward compatibility, and PSPemu runs PSP software against that PSP-side CPU/GPU hardware. See the Vita PSP hardware compatibility overview (https://consolemods.org/wiki/Vita:PlayStation_Portable_(PSP)_Games) and the PSPemu/ePSP glossary (https://adrenaline.sarcasticat.com/docs/XX-Glossary.html). Therefore, GXM MSAA settings do not automatically apply to the PSP Graphics Engine. There is no evidence that changing GXM render-target settings would anti-alias the PSP game's geometry.
 
+## New finding: PSP Graphics Engine has limited native line anti-aliasing
+
+The PSP Graphics Engine documentation describes special anti-aliasing lines, which compute per-pixel alpha from a line's distance. The feature is rarely used by games (Echochrome is cited as an example). This is not general polygon MSAA and is not a global switch that can smooth every game's silhouettes. See PPSSPP's technical GE overview: https://www.ppsspp.org/docs/psp-hardware/gpu/ge-overview/ and PSP DevWiki: https://www.psdevwiki.com/psp/Graphics_Engine.
+
+Implication: even if PSPemu exposes the PSP GE behavior faithfully, this feature cannot be assumed to smooth ordinary triangle edges across all games. It is useful evidence about the original PSP hardware, not yet a practical universal fix.
+
 ## Techniques
 
 ### MSAA — strongest theoretical match for 3D edges
