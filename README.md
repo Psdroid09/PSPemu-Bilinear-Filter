@@ -31,6 +31,12 @@ Esto confirma que el suavizado de Adrenaline forma parte de su ruta de composici
 Fuente: [TheOfficialFloW/Adrenaline](https://github.com/TheOfficialFloW/Adrenaline), especialmente `user/menu.c` y `user/includes/`.
 
 
+### Fuente del shader Advanced AA localizada
+
+Se encontró el código fuente coincidente `advanced_aa_v.cg` / `advanced_aa_f.cg` en la colección de shaders de frangarcj. Es un filtro espacial adaptativo de nueve muestras, no FXAA. El algoritmo ya está identificado, pero aún falta una ruta segura para capturar y presentar el framebuffer PSP de una burbuja Chovy-Sign.
+
+Detalles y licencia: [`docs/advanced-aa-shader-source.md`](docs/advanced-aa-shader-source.md).
+
 ### Auditoría adicional: ruta IFTU directa de AdrBubbleBooter
 
 Se revisó un parche público que intercepta `ksceIftuSetInputFrameBuffer` para activar un modo de escalado directo 2x. El parche cambia el muestreo de bilinear a point/nearest bajo condiciones muy concretas; **no ejecuta FXAA ni ningún antialiasing**. Además, depende de módulos de AdrBubbleBooter/Adrenaline y no es un plugin independiente para burbujas Chovy-Sign. Se descarta como solución para este proyecto.
