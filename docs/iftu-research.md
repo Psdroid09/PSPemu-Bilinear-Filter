@@ -49,3 +49,25 @@ No plugin or VPK is being distributed at this stage. Do not install the Adrenali
 - [Adrenaline Bubble Manager patch README](https://github.com/ONElua/AdrenalineBubbleManager/blob/master/patches/README.md)
 - [Direct IFTU patch](https://github.com/ONElua/AdrenalineBubbleManager/blob/master/patches/adrbubblebooter-v1.3-direct-iftu.patch)
 - [Adrenaline source](https://github.com/TheOfficialFloW/Adrenaline)
+
+## PSPemu-only process gate (new finding)
+
+VitaSDK's kernel SblACMgr documentation exposes `ksceSblACMgrIsPspEmu(SceUID pid)`, which returns 1 when the target process is PSPemu. On firmware 3.60, process ID zero selects the current process. The related `ksceSblACMgrIsPspEmu2` documentation identifies PSPemu PAIDs as `0x2800000000007009` and `0x2800000000000013`.
+
+Primary reference: [VitaSDK SceSblACMgrKernel documentation](https://docs.vitasdk.org/group__SceSblACMgrKernel.html).
+
+This provides a documented candidate gate: evaluate `ksceSblACMgrIsPspEmu(SCE_KERNEL_PROCESS_ID_SELF)` in the IFTU hook and change the filter argument only when it returns 1. All other calls must pass through unchanged.
+
+### Kernel hook-context caveat
+
+The IFTU import hook runs in the kernel display path. Before implementation, verify that the current-process identity observed at this call site is reliably PSPemu on the target firmware and does not resolve to a display/system worker context. The API's existence alone does not prove that its result will be PSPemu at every invocation. If ambiguous, do not use this gate blindly.
+
+### Proposed minimal plugin behavior
+
+- Install one import hook for `SceDisplay` → `ksceIftuSetInputFrameBuffer`.
+- If current process is not PSPemu, call the original function with every argument unchanged.
+- If current process is PSPemu, set only the filter argument to `SCE_IFTU_FILTER_MODE_BILINEAR`; preserve plane, state, and sync mode.
+- No filesystem logging, no config file initially, no framebuffer rewriting, no scaling/aspect-ratio modifications, and no changes to ISO/license/save data.
+- Include a clear disable/uninstall procedure and test on a disposable bubble before normal use.
+
+This is a viable implementation direction, not a tested plugin. It still requires compilation against the correct VitaSDK/taiHEN headers, ABI review, firmware 3.60 testing, and confirmation on a real Chovy-Sign bubble.
