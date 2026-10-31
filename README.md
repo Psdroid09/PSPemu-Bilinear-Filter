@@ -30,6 +30,13 @@ Esto confirma que el suavizado de Adrenaline forma parte de su ruta de composici
 
 Fuente: [TheOfficialFloW/Adrenaline](https://github.com/TheOfficialFloW/Adrenaline), especialmente `user/menu.c` y `user/includes/`.
 
+
+### Auditoría adicional: ruta IFTU directa de AdrBubbleBooter
+
+Se revisó un parche público que intercepta `ksceIftuSetInputFrameBuffer` para activar un modo de escalado directo 2x. El parche cambia el muestreo de bilinear a point/nearest bajo condiciones muy concretas; **no ejecuta FXAA ni ningún antialiasing**. Además, depende de módulos de AdrBubbleBooter/Adrenaline y no es un plugin independiente para burbujas Chovy-Sign. Se descarta como solución para este proyecto.
+
+Detalles: [`docs/iftu-direct-path-audit.md`](docs/iftu-direct-path-audit.md).
+
 ### Prueba del filtro nativo: resultado rechazado
 
 El usuario confirmó que **Bilinear Filtering** sí aparece en el menú rápido de sus burbujas Chovy-Sign, pero el resultado visual le pareció horrible. Mantenerlo desactivado. El bilinear de salida mezcla muestras de toda la imagen y no equivale a antialiasing geométrico.
