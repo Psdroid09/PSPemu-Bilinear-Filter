@@ -8,28 +8,35 @@ Sony describes the option as smoothing rough graphics when PSP-resolution output
 
 Primary source: [PlayStation Vita User's Guide — Playing a game for the PSP system](https://manuals.playstation.net/document/gb/psvita/game/game_psp.html).
 
-## Relevance to Chovy-Sign bubbles
+## Test result on the target setup
 
-Chovy-Sign prepares PSP content to run through the Vita PSP emulator. It does not replace the emulator renderer. Therefore, the official PSPemu quick-menu option is the first and safest route to test on a Chovy-Sign PSP bubble.
+The user confirmed that the Bilinear Filtering option **does appear** in a Chovy-Sign PSP bubble, but reported that the image looks horrible with it enabled.
 
-The official Sony guide does not specifically name Chovy-Sign-created bubbles. Availability in those bubbles is therefore strongly plausible but still needs confirmation on the user's actual FW 3.60 setup.
+Conclusion: the setting is available through the official PSPemu quick menu, but it does not meet this project's visual-quality goal on the user's setup. Do not recommend leaving it enabled. Return it to its previous/off state before comparing any further filter.
+
+This is an important result: the existence of a bilinear toggle does not mean bilinear is the desired solution.
+
+## Technical interpretation
+
+Bilinear filtering interpolates neighboring samples. It can reduce harsh pixel edges, but it also softens fine text, HUD elements, and textures. The user's visual test rejects this output as too blurry/poor.
+
+The native toggle is therefore a useful baseline only, not the final filter.
 
 ## Safe test
 
 1. Launch one PSP bubble created with Chovy-Sign.
 2. While the game is running, hold the PS button to open the Vita quick menu.
 3. Open the game's Settings panel.
-4. Look for **Bilinear Filtering** and enable it.
-5. Return to the game and compare text, edges, HUD, and 3D scenes.
-6. Exit and relaunch the same bubble to see whether the setting persists.
-7. Repeat with one other PSP bubble only if needed.
+4. Toggle Bilinear Filtering only for an A/B comparison.
+5. The user found the enabled result unacceptable; leave it disabled for normal play.
+6. Do not change plugins, clock speeds, ISO files, licenses, or save data as part of this comparison.
 
-This changes an official PSPemu setting; it should not require installing a plugin, changing taiHEN config, editing the ISO, or touching saves/licenses.
+## Next research direction
 
-## If the option is missing
+Investigate whether a sharper reconstruction filter can be applied to the PSPemu output. The IFTU API exposes nearest and bilinear modes, but no documented sharp-bilinear or shader mode. A sharper filter would likely require access to PSPemu's composition/rendering path or another verified programmable stage; a simple IFTU argument change cannot provide that effect.
 
-If the Settings panel or Bilinear Filtering entry does not appear in a Chovy-Sign bubble, record what entries are visible. Only then proceed to the kernel IFTU investigation. Do not install Sharpscale just to test this option.
+Do not build a plugin that merely forces IFTU bilinear: the user's direct test has already shown that this does not satisfy the goal.
 
 ## Recommendation
 
-Try the Sony-provided quick-menu setting before any plugin work. It is the lowest-risk solution and could make the custom plugin unnecessary.
+Keep native Bilinear Filtering off. Continue source-level investigation for a sharper PSPemu-only solution, and do not install a kernel plugin until its exact hook point and visual behavior are demonstrated.
