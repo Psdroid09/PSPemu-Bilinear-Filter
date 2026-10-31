@@ -15,7 +15,7 @@ Evaluar si es posible aplicar filtrado bilineal (o un filtro de suavizado equiva
 
 ## Estado
 
-**Investigación técnica avanzada. No existe todavía un plugin, parche ni VPK propio funcional.** La ruta más prometedora identificada es el ajuste Bilinear de Sharpscale; falta validarlo en una burbuja Chovy-Sign real.
+**Investigación técnica avanzada. No existe todavía un plugin, parche ni VPK propio funcional.** Se encontró primero una vía más segura: Sony documenta un ajuste Bilinear integrado en el menú rápido de juegos PSP. Hay que probar si aparece también en una burbuja Chovy-Sign. Si no aparece, la alternativa técnica es un hook IFTU propio y limitado a PSPemu.
 
 ### Hallazgo confirmado en Adrenaline
 
@@ -30,9 +30,15 @@ Esto confirma que el suavizado de Adrenaline forma parte de su ruta de composici
 
 Fuente: [TheOfficialFloW/Adrenaline](https://github.com/TheOfficialFloW/Adrenaline), especialmente `user/menu.c` y `user/includes/`.
 
+### Primera opción recomendada: menú rápido oficial de PSPemu
+
+Sony documenta que, mientras corre un juego PSP, se mantiene pulsado PS, se entra a Settings y se puede activar **Bilinear Filtering**. Es la primera prueba que debe hacerse en una burbuja Chovy-Sign: no requiere plugin, cambios en taiHEN ni tocar ISO/licencias/partidas. La guía oficial no menciona expresamente burbujas Chovy-Sign, así que falta confirmar que el ajuste aparezca en ellas.
+
+Detalles: [`docs/native-quick-menu.md`](docs/native-quick-menu.md).
+
 ### Hallazgo principal: Sharpscale ya tiene una ruta IFTU relevante
 
-La auditoría del código de Sharpscale encontró que ya intercepta `ksceIftuSetInputFrameBuffer` y ofrece `Point` o `Bilinear`. El filtro se aplica en la ruta genérica de escalado de pantalla, no solamente dentro de Adrenaline. Por ello es el candidato más prometedor para suavizar la salida de PSPemu sin iniciar Adrenaline ni modificar burbujas.
+La auditoría del código de Sharpscale encontró que ya intercepta `ksceIftuSetInputFrameBuffer` y usa `ksceSblACMgrIsPspEmu(SCE_KERNEL_PROCESS_ID_SELF)` desde ese hook. Sin embargo, su opción Bilinear solo conserva el valor entrante; no fuerza un 0 a 1. Por tanto, Sharpscale no garantiza el efecto buscado si PSPemu envía nearest. Un plugin propio podría forzar bilinear solo para llamadas PSPemu validadas, pero aún no está implementado.
 
 No se ha probado todavía en una burbuja Chovy-Sign real. Su ajuste es global y el paquete disponible es antiguo (v1.50, 2020); el código fuente desactiva el file logging por defecto, pero habría que verificar el binario exacto. Detalles y secuencia de prueba: [`docs/sharpscale-findings.md`](docs/sharpscale-findings.md).
 
@@ -49,11 +55,12 @@ Fuente: [LiEnby/chovy-sign](https://github.com/LiEnby/chovy-sign).
 ## Plan de investigación
 
 - [x] Identificar el papel de Chovy-Sign: prepara/firma el contenido; no implementa el renderer PSP.
-- [ ] Confirmar en consola que la burbuja Chovy-Sign usa la ruta SceDisplay/IFTU observada en Sharpscale.
+- [ ] Probar el ajuste Bilinear oficial del menú rápido en una burbuja Chovy-Sign.
 - [x] Localizar un punto de integración documentado: `ksceIftuSetInputFrameBuffer`.
 - [x] Auditar las rutas de filtrado de Adrenaline y Sharpscale, sin copiar código externo.
 - [ ] Verificar la compatibilidad exacta de Sharpscale con el firmware 3.60 y el conjunto de plugins instalado.
 - [x] Diseñar una prueba reversible que no toca ISO, licencia ni datos de guardado.
+- [x] Confirmar que Sony documenta un ajuste Bilinear nativo para juegos PSP.
 - [ ] Medir el resultado visual, rendimiento y estabilidad en la PS Vita real.
 - [ ] Crear un plugin propio únicamente si Sharpscale no cubre el caso o sus logs/ajuste global no son aceptables.
 
