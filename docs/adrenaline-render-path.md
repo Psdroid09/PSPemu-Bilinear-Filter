@@ -56,7 +56,7 @@ Merely reading `0x74000000` is not sufficient: timing, cache coherency, process 
 
 Adrenaline includes an **Advanced AA** option and creates a dedicated GXM shader pair named `advanced_aa_v` / `advanced_aa_f`. The menu code selects that shader when the option is chosen.
 
-The checked-in headers expose compiled shader binaries, not the original readable shader source. The source confirms the existence and use of the shader, but does not by itself establish the exact algorithm (for example, do not label it FXAA without inspecting/decompiling the shader or finding its original source).
+The Adrenaline headers expose compiled shader binaries, not readable shader source. A matching source pair named `advanced_aa_v.cg` / `advanced_aa_f.cg` was subsequently found in [frangarcj/vita-shader-collection, branch `gtu`](https://github.com/frangarcj/vita-shader-collection/tree/gtu/shaders). The fragment shader is a 9-sample spatial adaptive antialiasing filter, not FXAA. Adrenaline credits frangarcj for graphics filtering, and the filenames match; however, the compiled GXP binaries have not been compared byte-for-byte with that source, so exact binary identity remains unverified. The source carries a GPL-2.0-or-later notice and copyright to guest (2006); any reuse must comply with that license. See [`docs/advanced-aa-shader-source.md`](advanced-aa-shader-source.md) for the algorithm and cost assessment.
 
 The shader and renderer are part of Adrenaline's GPL-3.0 project. Any code reuse would require preserving and complying with its license; this research does not copy its binary shader or code into this repository.
 
