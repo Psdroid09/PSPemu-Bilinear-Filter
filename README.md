@@ -34,7 +34,7 @@ Fuente: [TheOfficialFloW/Adrenaline](https://github.com/TheOfficialFloW/Adrenali
 
 La auditoría del código de Sharpscale encontró que ya intercepta `ksceIftuSetInputFrameBuffer` y ofrece `Point` o `Bilinear`. El filtro se aplica en la ruta genérica de escalado de pantalla, no solamente dentro de Adrenaline. Por ello es el candidato más prometedor para suavizar la salida de PSPemu sin iniciar Adrenaline ni modificar burbujas.
 
-No se ha probado todavía en una burbuja Chovy-Sign real. Su ajuste es global y el plugin kernel escribe logs; ambos puntos deben evaluarse antes de recomendar instalación. Detalles y secuencia de prueba: [`docs/sharpscale-findings.md`](docs/sharpscale-findings.md).
+No se ha probado todavía en una burbuja Chovy-Sign real. Su ajuste es global y el paquete disponible es antiguo (v1.50, 2020); el código fuente desactiva el file logging por defecto, pero habría que verificar el binario exacto. Detalles y secuencia de prueba: [`docs/sharpscale-findings.md`](docs/sharpscale-findings.md).
 
 ### Restricción importante
 
