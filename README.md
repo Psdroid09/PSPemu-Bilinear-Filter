@@ -36,6 +36,12 @@ Sony documenta que, mientras corre un juego PSP, se mantiene pulsado PS, se entr
 
 Detalles: [`docs/native-quick-menu.md`](docs/native-quick-menu.md).
 
+### Hallazgo técnico: API IFTU de firmware 3.60 verificada
+
+La documentación de VitaSDK confirma los modos IFTU `NEAREST = 0` y `BILINEAR = 1`, la firma exacta de `ksceIftuSetInputFrameBuffer`, y los identificadores de importación de FW 3.60 para detectar PSPemu. Esto demuestra que existe una vía técnica para solicitar bilinear sin copiar el framebuffer ni modificar la geometría. **No demuestra todavía que la llamada de una burbuja Chovy-Sign en el dispositivo del usuario coincida con la firma provisional.**
+
+Detalles: [`docs/vitasdk-api-verification.md`](docs/vitasdk-api-verification.md) y [`docs/plugin-design.md`](docs/plugin-design.md).
+
 ### Hallazgo principal: Sharpscale ya tiene una ruta IFTU relevante
 
 La auditoría del código de Sharpscale encontró que ya intercepta `ksceIftuSetInputFrameBuffer` y usa `ksceSblACMgrIsPspEmu(SCE_KERNEL_PROCESS_ID_SELF)` desde ese hook. Sin embargo, su opción Bilinear solo conserva el valor entrante; no fuerza un 0 a 1. Por tanto, Sharpscale no garantiza el efecto buscado si PSPemu envía nearest. Un plugin propio podría forzar bilinear solo para llamadas PSPemu validadas, pero aún no está implementado.
@@ -61,8 +67,9 @@ Fuente: [LiEnby/chovy-sign](https://github.com/LiEnby/chovy-sign).
 - [ ] Verificar la compatibilidad exacta de Sharpscale con el firmware 3.60 y el conjunto de plugins instalado.
 - [x] Diseñar una prueba reversible que no toca ISO, licencia ni datos de guardado.
 - [x] Confirmar que Sony documenta un ajuste Bilinear nativo para juegos PSP.
+- [x] Verificar contra VitaSDK las firmas IFTU y los NID de detección PSPemu para FW 3.60.
 - [ ] Medir el resultado visual, rendimiento y estabilidad en la PS Vita real.
-- [ ] Crear un plugin propio únicamente si Sharpscale no cubre el caso o sus logs/ajuste global no son aceptables.
+- [ ] Crear un plugin propio únicamente si la opción nativa no está disponible o no cubre el caso.
 
 ## Criterios para aceptar una solución
 
