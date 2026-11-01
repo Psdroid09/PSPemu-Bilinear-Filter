@@ -31,9 +31,11 @@ Esto confirma que el suavizado de Adrenaline forma parte de su ruta de composici
 Fuente: [TheOfficialFloW/Adrenaline](https://github.com/TheOfficialFloW/Adrenaline), especialmente `user/menu.c` y `user/includes/`.
 
 
-### Estrategia de prueba aislada
+### Estrategia de prueba aislada (actualizada)
 
-Se confirmó que el cargador de Adrenaline solo inserta su renderer en el título `PSPEMUCFW`; no se activa automáticamente en burbujas Chovy-Sign. La vía menos invasiva para una prueba futura sería cargar un módulo de usuario solo bajo el TITLEID de una burbuja de prueba, nunca con `*ALL` ni con un plugin kernel global.
+Se inspeccionó el código de taiHEN: su cargador inicia los módulos predeterminados del proceso y después carga los plugins asociados al TITLEID. Esto hace viable investigar un plugin de usuario asociado a una sola burbuja Chovy-Sign, sin crear nuestro propio SKPRX ni añadirlo a `*ALL`. Adrenaline usa un kernel loader propio para su TITLEID `PSPEMUCFW`, pero ese mecanismo no es obligatorio para la primera prueba de título.
+
+La carga específica de una burbuja todavía debe confirmarse en la Vita real. La captura y presentación segura del framebuffer siguen siendo el bloqueo principal.
 
 Detalles: [`docs/chovy-titleid-loading-strategy.md`](docs/chovy-titleid-loading-strategy.md).
 
@@ -83,10 +85,12 @@ Fuente: [LiEnby/chovy-sign](https://github.com/LiEnby/chovy-sign).
 - [ ] Probar el ajuste Bilinear oficial del menú rápido en una burbuja Chovy-Sign.
 - [x] Localizar un punto de integración documentado: `ksceIftuSetInputFrameBuffer`.
 - [x] Auditar las rutas de filtrado de Adrenaline y Sharpscale, sin copiar código externo.
-- [ ] Verificar la compatibilidad exacta de Sharpscale con el firmware 3.60 y el conjunto de plugins instalado.
+- [x] Identificar en el código de taiHEN la carga de plugins por TITLEID después de iniciar los módulos predeterminados.
 - [x] Diseñar una prueba reversible que no toca ISO, licencia ni datos de guardado.
 - [x] Confirmar que Sony documenta un ajuste Bilinear nativo para juegos PSP.
 - [x] Verificar contra VitaSDK las firmas IFTU y los NID de detección PSPemu para FW 3.60.
+- [ ] Confirmar en la PS Vita real que un plugin de usuario por TITLEID ve ScePspemu en una burbuja Chovy-Sign.
+- [ ] Demostrar captura/presentación de framebuffer con recuperación segura antes de activar shaders.
 - [ ] Medir el resultado visual, rendimiento y estabilidad en la PS Vita real.
 - [ ] Crear un plugin propio únicamente si la opción nativa no está disponible o no cubre el caso.
 
