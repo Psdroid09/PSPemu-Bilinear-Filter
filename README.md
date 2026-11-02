@@ -105,3 +105,8 @@ Fuente: [LiEnby/chovy-sign](https://github.com/LiEnby/chovy-sign).
 ## Licencia
 
 Este repositorio de investigación no incorpora código de Adrenaline. Antes de reutilizar cualquier código o shader externo se revisarán su licencia, avisos de copyright y dependencias.
+
+
+## Ejecución de los cinco pasos
+
+Se documentó el estado real de cada paso, los límites de seguridad y el dato pendiente para continuar en la consola: [`docs/five-step-execution-plan.md`](docs/five-step-execution-plan.md).
